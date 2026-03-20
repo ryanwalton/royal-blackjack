@@ -213,17 +213,25 @@ function DealerPortrait({ dealerId, mood="idle" }) {
             <ellipse cx={cx-30} cy={H-14} rx={13} ry={7} fill="#f8f4f0"/>
             <ellipse cx={cx+30} cy={H-14} rx={13} ry={7} fill="#f8f4f0"/>
             
-            <ellipse cx={cx} cy={headCY+headRY+4} rx={38} ry={22} fill="#f8f4f0"/>
+            <rect x={cx-24} y={headCY+headRY-4} width={48} height={28} rx={8} fill="#f8f4f0"/>
             
-            <path d={`M ${cx-headRX*0.7},${headCY-headRY*0.5} L ${cx-headRX*1.1},${headCY-headRY*1.65} L ${cx-headRX*0.2},${headCY-headRY*0.9} Z`} fill="#c8956a"/>
-            <path d={`M ${cx+headRX*0.7},${headCY-headRY*0.5} L ${cx+headRX*1.1},${headCY-headRY*1.65} L ${cx+headRX*0.2},${headCY-headRY*0.9} Z`} fill="#c8956a"/>
+            <path d={`M ${cx-headRX*0.68},${headCY-headRY*0.48} L ${cx-headRX*1.08},${headCY-headRY*1.65} L ${cx-headRX*0.22},${headCY-headRY*0.88} Z`} fill="#c8956a"/>
+            <path d={`M ${cx+headRX*0.68},${headCY-headRY*0.48} L ${cx+headRX*1.08},${headCY-headRY*1.65} L ${cx+headRX*0.22},${headCY-headRY*0.88} Z`} fill="#c8956a"/>
             
-            <path d={`M ${cx-headRX*0.65},${headCY-headRY*0.55} L ${cx-headRX*0.98},${headCY-headRY*1.45} L ${cx-headRX*0.28},${headCY-headRY*0.88} Z`} fill="#e8a0a0" opacity="0.7"/>
-            <path d={`M ${cx+headRX*0.65},${headCY-headRY*0.55} L ${cx+headRX*0.98},${headCY-headRY*1.45} L ${cx+headRX*0.28},${headCY-headRY*0.88} Z`} fill="#e8a0a0" opacity="0.7"/>
+            <path d={`M ${cx-headRX*0.64},${headCY-headRY*0.52} L ${cx-headRX*0.96},${headCY-headRY*1.46} L ${cx-headRX*0.26},${headCY-headRY*0.88} Z`} fill="#e8a0a0" opacity="0.7"/>
+            <path d={`M ${cx+headRX*0.64},${headCY-headRY*0.52} L ${cx+headRX*0.96},${headCY-headRY*1.46} L ${cx+headRX*0.26},${headCY-headRY*0.88} Z`} fill="#e8a0a0" opacity="0.7"/>
             
             <ellipse cx={cx} cy={headCY} rx={headRX} ry={headRY} fill="#c8956a"/>
             
-            <path d={`M ${cx-headRX*0.85},${headCY+4} Q ${cx-headRX*0.6},${headCY-headRY*0.1} ${cx},${headCY-headRY*0.05} Q ${cx+headRX*0.6},${headCY-headRY*0.1} ${cx+headRX*0.85},${headCY+4} Q ${cx+headRX*0.7},${headCY+headRY*0.9} ${cx},${headCY+headRY*1.02} Q ${cx-headRX*0.7},${headCY+headRY*0.9} Z`} fill="#f8f4f0"/>
+            <path d={`
+              M ${cx},${headCY-headRY*0.06}
+              Q ${cx+headRX*0.65},${headCY-headRY*0.12} ${cx+headRX*0.82},${headCY+6}
+              Q ${cx+headRX*0.72},${headCY+headRY*0.55} ${cx+headRX*0.62},${headCY+headRY*0.88}
+              Q ${cx+headRX*0.34},${headCY+headRY*1.04} ${cx},${headCY+headRY*1.02}
+              Q ${cx-headRX*0.34},${headCY+headRY*1.04} ${cx-headRX*0.62},${headCY+headRY*0.88}
+              Q ${cx-headRX*0.72},${headCY+headRY*0.55} ${cx-headRX*0.82},${headCY+6}
+              Q ${cx-headRX*0.65},${headCY-headRY*0.12} ${cx},${headCY-headRY*0.06}
+              Z`} fill="#f8f4f0"/>
             
             <path d={`M ${cx-14},${headCY-headRY*0.05} Q ${cx},${headCY-headRY*0.5} ${cx+14},${headCY-headRY*0.05}`} fill="#c8956a" opacity="0.6"/>
             
@@ -558,7 +566,52 @@ function useSfx() {
       if (type === "deal")        { beep(800, 0.1, "triangle", 0.13); }
       else if (type === "chip")   { beep(1100, 0.07, "sine", 0.1); }
       else if (type === "win")    { [523,659,784].forEach((f,i) => setTimeout(() => beep(f, 0.22, "sine", 0.15), i * 100)); }
-      else if (type === "blackjack") { [523,659,784,1047].forEach((f,i) => setTimeout(() => beep(f, 0.28, "sine", 0.18), i * 80)); }
+      else if (type === "blackjack") {
+        // triumphant fanfare jingle
+        const now = ac.currentTime;
+
+        function note(freq, start, dur, vol=0.18, shape="sine") {
+          const o = ac.createOscillator(), g = ac.createGain();
+          o.connect(g); g.connect(dest);
+          o.type = shape; o.frequency.value = freq;
+          g.gain.setValueAtTime(0, now + start);
+          g.gain.linearRampToValueAtTime(vol, now + start + 0.02);
+          g.gain.setValueAtTime(vol, now + start + dur * 0.75);
+          g.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+          o.start(now + start); o.stop(now + start + dur + 0.05);
+        }
+
+        // melody: ta-ta-ta TAAAA ta-ta TAAAA!
+        // C4  E4  G4  C5 (pause) E5  G5  C6
+        const mel = [
+          [523,  0.00, 0.12],
+          [659,  0.13, 0.12],
+          [784,  0.26, 0.12],
+          [1047, 0.38, 0.32],
+          [1047, 0.72, 0.10],
+          [1175, 0.84, 0.10],
+          [1319, 0.96, 0.55],
+        ];
+        mel.forEach(([f, s, d]) => note(f, s, d, 0.2, "sine"));
+
+        // harmony (5ths below melody, quieter)
+        const harm = [
+          [392,  0.00, 0.12],
+          [494,  0.13, 0.12],
+          [587,  0.26, 0.12],
+          [784,  0.38, 0.32],
+          [784,  0.72, 0.10],
+          [880,  0.84, 0.10],
+          [988,  0.96, 0.55],
+        ];
+        harm.forEach(([f, s, d]) => note(f, s, d, 0.10, "triangle"));
+
+        // punchy bass hits on the accented beats
+        [[130, 0.00], [164, 0.38], [130, 0.96]].forEach(([f, s]) => note(f, s, 0.18, 0.22, "sine"));
+
+        // shimmer: rapid high arpeggio on the final note
+        [1047,1175,1319,1568,2093].forEach((f, i) => note(f, 1.0 + i*0.055, 0.18, 0.07, "sine"));
+      }
       else if (type === "lose")   { beep(280, 0.4, "sawtooth", 0.12); }
       else if (type === "bust")   { [250,180].forEach((f,i) => setTimeout(() => beep(f, 0.22, "sawtooth", 0.12), i * 140)); }
       else if (type === "achievement") { [523,587,659,784,1047].forEach((f,i) => setTimeout(() => beep(f, 0.35, "sine", 0.14), i * 90)); }
@@ -608,7 +661,7 @@ function useSfx() {
 }
 
 // save state
-const defaultSave=()=>({chips:1000,ownedCards:["classic"],ownedDealers:["victoria"],ownedTables:["classic"],ownedChipSets:["classic"],equippedCard:"classic",equippedDealer:"victoria",equippedTable:"classic",equippedChipSet:"classic",stats:{wins:0,losses:0,pushes:0,blackjacks:0,maxBet:0,maxChips:1000,bestStreak:0,currentStreak:0,purchases:0,dailyClaims:0,doubleWins:0,comeback:false,lowestChips:1000},achievements:[],lastDaily:null});
+const defaultSave=()=>({chips:10000,ownedCards:["classic"],ownedDealers:["victoria"],ownedTables:["classic"],ownedChipSets:["classic"],equippedCard:"classic",equippedDealer:"victoria",equippedTable:"classic",equippedChipSet:"classic",stats:{wins:0,losses:0,pushes:0,blackjacks:0,maxBet:0,maxChips:10000,bestStreak:0,currentStreak:0,purchases:0,dailyClaims:0,doubleWins:0,comeback:false,lowestChips:10000},achievements:[],lastDaily:null});
 
 // card back pattern renderer
 function CardBackPattern({ backId, size=68 }) {
@@ -820,9 +873,11 @@ export default function App() {
   const[hint,setHint]=useState(null);
 
   
-  const[splitHand,setSplitHand]=useState(null);   
+  const[splitHand,setSplitHand]=useState(null);
   const[splitBet,setSplitBet]=useState(0);
-  const[activeSplit,setActiveSplit]=useState(0);   
+  const[lastBet,setLastBet]=useState(0);
+  const[lastSplitBet,setLastSplitBet]=useState(0);
+  const[activeSplit,setActiveSplit]=useState(0);
   const[splitResult,setSplitResult]=useState(null);
 
   
@@ -867,9 +922,10 @@ export default function App() {
 
   
   // suits don't matter for splits
-  const canSplit = playerHand.length===2 && !splitHand && chips>=bet &&
+  const canSplit = playerHand.length===2 && !splitHand &&
     (playerHand[0].value === playerHand[1].value ||
      (["10","J","Q","K"].includes(playerHand[0].value) && ["10","J","Q","K"].includes(playerHand[1].value)));
+  const canAffordSplit = chips >= bet;
 
   const doSplit=()=>{
     if(!canSplit)return;
@@ -903,15 +959,14 @@ export default function App() {
     setDeck(rest);
     if(handTotal(nh)>=21){
       setTimeout(()=>{
-        if(activeSplit===0&&splitHand){
-          
+        if(activeSplit===0&&splitHand&&splitBet>0){
           setActiveSplit(1);
           if(handTotal(nh)>21){
             setSplitResult(prev=>({...prev,main:{res:"bust",wa:0}}));
           }
           if(equippedDealer==="luna")setTimeout(()=>{const h=getHint(splitHand,dealerHand[0]);sfx("hint");setHint(h);},300);
         } else {
-          resolveGame(activeSplit===0?nh:playerHand, dealerHand, rest, false, false, activeSplit===0?splitHand:null, activeSplit===0?nh:splitHand||nh);
+          resolveGame(activeSplit===0?nh:playerHand, dealerHand, rest, false, false, splitBet>0?(activeSplit===0?splitHand:null):null, splitBet>0?(activeSplit===0?null:nh):null);
         }
       },400);
     } else if(equippedDealer==="luna"){
@@ -922,14 +977,11 @@ export default function App() {
   const stand=()=>{
     setHint(null); setMood("thinking",900);
     say(["Interesting choice.","Standing, are we?","Okay then.","Alright."][Math.floor(Math.random()*4)],1100);
-    if(activeSplit===0&&splitHand){
-      
+    if(activeSplit===0&&splitHand&&splitBet>0){
       setActiveSplit(1);
       if(equippedDealer==="luna")setTimeout(()=>{const h=getHint(splitHand,dealerHand[0]);sfx("hint");setHint(h);},300);
     } else {
-      const mainH = activeSplit===0 ? playerHand : playerHand;
-      const splitH = activeSplit===1 ? currentHand : splitHand;
-      resolveGame(mainH, dealerHand, deck, false, false, splitHand, activeSplit===1?currentHand:null);
+      resolveGame(playerHand, dealerHand, deck, false, false, splitBet>0?splitHand:null, splitBet>0&&activeSplit===1?currentHand:null);
     }
   };
 
@@ -944,11 +996,11 @@ export default function App() {
     if(activeSplit===0){setPlayerHand(nh);}else{setSplitHand(nh);}
     setDeck(rest);
     setTimeout(()=>{
-      if(activeSplit===0&&splitHand){
+      if(activeSplit===0&&splitHand&&splitBet>0){
         setActiveSplit(1);
         if(equippedDealer==="luna")setTimeout(()=>{const h=getHint(splitHand,dealerHand[0]);sfx("hint");setHint(h);},300);
       } else {
-        resolveGame(activeSplit===0?nh:playerHand, dealerHand, rest, false, true, splitHand, activeSplit===0?null:nh);
+        resolveGame(activeSplit===0?nh:playerHand, dealerHand, rest, false, true, splitBet>0?(activeSplit===0?splitHand:null):null, splitBet>0?(activeSplit===0?null:nh):null);
       }
     },400);
   };
@@ -971,6 +1023,8 @@ export default function App() {
   };
 
   const finalResult=(pHand, dHand, isBJ, isDbl, resolvedSplitHand=null)=>{
+    setLastBet(bet);
+    setLastSplitBet(splitBet);
     const p=handTotal(pHand), dv=handTotal(dHand);
     const calcOutcome=(ph,betAmt,isBlackjack,isDouble)=>{
       let res="",wa=0;
@@ -986,7 +1040,7 @@ export default function App() {
     };
 
     const main=calcOutcome(pHand,bet,isBJ,isDbl);
-    const split=resolvedSplitHand?calcOutcome(resolvedSplitHand,splitBet,false,false):null;
+    const split=resolvedSplitHand&&splitBet>0?calcOutcome(resolvedSplitHand,splitBet,false,false):null;
 
     
     const bestRes=split?(main.res==="blackjack"||split.res==="blackjack"?"blackjack":main.res==="win"||split.res==="win"?"win":main.res==="push"||split.res==="push"?"push":"lose"):main.res;
@@ -1036,10 +1090,10 @@ export default function App() {
       };
       return{...prev,chips:nc,stats:ns,achievements:checkAch(ns,prev.achievements)};
     });
-    setBet(0);setSplitBet(0);setPhase("result");
+    setBet(0);setPhase("result");
   };
 
-  const newRound=()=>{setPlayerHand([]);setDealerHand([]);setBet(0);setResult("");setMessages([]);setHint(null);setDealerMood("idle");setSpeech("");setPhase("betting");setSplitHand(null);setSplitBet(0);setActiveSplit(0);setSplitResult(null);};
+  const newRound=()=>{setPlayerHand([]);setDealerHand([]);setBet(0);setLastBet(0);setResult("");setMessages([]);setHint(null);setDealerMood("idle");setSpeech("");setPhase("betting");setSplitHand(null);setSplitBet(0);setLastSplitBet(0);setActiveSplit(0);setSplitResult(null);};
 
   const navTabs=[{id:"game",icon:"🃏"},{id:"store",icon:"🛍️"},{id:"achievements",icon:"🏆"}];
   const storeTabs=[{id:"card",label:"Card Backs"},{id:"dealer",label:"Dealers"},{id:"table",label:"Tables"},{id:"chips",label:"Chip Sets"}];
@@ -1086,7 +1140,7 @@ export default function App() {
         </div>
 
         
-        {canClaimDaily&&view==="game"&&<div onClick={claimDaily} style={{background:"linear-gradient(135deg,rgba(241,196,15,0.09),rgba(230,126,34,0.06))",border:"1px solid rgba(241,196,15,0.2)",borderRadius:9,padding:"8px 13px",marginBottom:7,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity="0.85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+        {canClaimDaily&&view==="game"&&<div style={{background:"linear-gradient(135deg,rgba(241,196,15,0.09),rgba(230,126,34,0.06))",border:"1px solid rgba(241,196,15,0.2)",borderRadius:9,padding:"8px 13px",marginBottom:7,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity="0.85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
           <div style={{display:"flex",alignItems:"center",gap:7}}><span style={{fontSize:16}}>🎁</span><div><div style={{fontFamily:"Georgia,serif",fontSize:11,fontWeight:700,color:"#f1c40f"}}>Daily Bonus!</div><div style={{fontSize:8,color:"rgba(255,255,255,0.38)"}}>Free ${DAILY_BONUS} chips</div></div></div>
           <Btn label="CLAIM" onClick={claimDaily} disabled={false} color="#f1c40f" small/>
         </div>}
@@ -1131,12 +1185,14 @@ export default function App() {
               splitHand && splitHand.length>0 ? (
                 <div style={{display:"flex",gap:14,justifyContent:"center",alignItems:"flex-start",flexWrap:"wrap"}}>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                    <div style={{fontSize:8,letterSpacing:2,color:activeSplit===0&&phase==="playing"?"#f1c40f":"rgba(255,215,0,0.35)",fontFamily:"Georgia,serif",border:activeSplit===0&&phase==="playing"?"1px solid rgba(241,196,15,0.4)":"1px solid transparent",borderRadius:8,padding:"1px 7px"}}>HAND 1  ${bet}</div>
+                    <div style={{fontSize:8,letterSpacing:2,color:activeSplit===0&&phase==="playing"?"#f1c40f":"rgba(255,215,0,0.35)",fontFamily:"Georgia,serif",border:activeSplit===0&&phase==="playing"?"1px solid rgba(241,196,15,0.4)":"1px solid transparent",borderRadius:8,padding:"1px 7px"}}>{`HAND 1  $${phase==="result"?lastBet:bet}`}</div>
                     <Hand hand={playerHand} label="" total={handTotal(playerHand)} cardBack={equippedCard}/>
+                    {phase==="result"&&messages[0]&&<div style={{fontFamily:"Georgia,serif",fontSize:12,fontWeight:700,color:messages[0].color,letterSpacing:2,textTransform:"uppercase",textShadow:`0 0 12px ${messages[0].color}88`,animation:"pulse 1.5s ease-in-out infinite",textAlign:"center",marginTop:2}}>{messages[0].text.replace(/^\[HAND 1\] /,"")}</div>}
                   </div>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                    <div style={{fontSize:8,letterSpacing:2,color:activeSplit===1&&phase==="playing"?"#f1c40f":"rgba(255,215,0,0.35)",fontFamily:"Georgia,serif",border:activeSplit===1&&phase==="playing"?"1px solid rgba(241,196,15,0.4)":"1px solid transparent",borderRadius:8,padding:"1px 7px"}}>HAND 2  ${splitBet}</div>
+                    <div style={{fontSize:8,letterSpacing:2,color:activeSplit===1&&phase==="playing"?"#f1c40f":"rgba(255,215,0,0.35)",fontFamily:"Georgia,serif",border:activeSplit===1&&phase==="playing"?"1px solid rgba(241,196,15,0.4)":"1px solid transparent",borderRadius:8,padding:"1px 7px"}}>{`HAND 2  $${phase==="result"?lastSplitBet:splitBet}`}</div>
                     <Hand hand={splitHand} label="" total={handTotal(splitHand)} cardBack={equippedCard}/>
+                    {phase==="result"&&messages[1]&&<div style={{fontFamily:"Georgia,serif",fontSize:12,fontWeight:700,color:messages[1].color,letterSpacing:2,textTransform:"uppercase",textShadow:`0 0 12px ${messages[1].color}88`,animation:"pulse 1.5s ease-in-out infinite",textAlign:"center",marginTop:2}}>{messages[1].text.replace(/^\[HAND 2\] /,"")}</div>}
                   </div>
                 </div>
               ) : (
@@ -1144,15 +1200,14 @@ export default function App() {
               )
             )}
 
-            
             {hint&&phase==="playing"&&equippedDealer==="luna"&&<div style={{background:"linear-gradient(135deg,rgba(107,33,168,0.28),rgba(107,33,168,0.1))",border:"1px solid rgba(192,132,252,0.4)",borderRadius:9,padding:"7px 14px",display:"flex",alignItems:"center",gap:7,animation:"speechPop 0.35s ease"}}>
               <span style={{fontSize:14}}>🔮</span>
               <span style={{fontFamily:"Georgia,serif",fontSize:12,fontWeight:700,color:hint.action==="HIT"?"#60a5fa":"#6ee7b7",letterSpacing:2}}>{hint.action}</span>
               <span style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontStyle:"italic"}}>— {hint.reason}</span>
             </div>}
 
-            
-            {messages.length>0&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            {/* single-hand result only */}
+            {messages.length>0&&!(splitHand&&splitHand.length>0&&splitBet>0)&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
               {messages.map((m,i)=><div key={i} style={{fontFamily:"Georgia,serif",fontSize:i===0?16:12,fontWeight:700,color:m.color,letterSpacing:i===0?3:1,textTransform:"uppercase",textShadow:`0 0 16px ${m.color}88`,animation:i===0?"pulse 1.5s ease-in-out infinite":"none",textAlign:"center"}}>{m.text}</div>)}
             </div>}
 
@@ -1172,8 +1227,14 @@ export default function App() {
             {phase==="playing"&&<div style={{display:"flex",gap:7,flexWrap:"wrap",justifyContent:"center"}}>
               <Btn label="HIT"    onClick={hit}        disabled={false}                                                    color="#27ae60"/>
               <Btn label="STAND"  onClick={stand}      disabled={false}                                                    color="#c9a84c"/>
-              <Btn label="DOUBLE" onClick={doubleDown} disabled={currentHand.length!==2||chips<currentBetForHand}         color="#2980b9"/>
-              {canSplit&&<Btn label="SPLIT" onClick={doSplit} disabled={false} color="#9b59b6"/>}
+              <div style={{position:"relative",display:"inline-block"}} title={currentHand.length===2&&chips<currentBetForHand?"Insufficient Funds":""}>
+                <Btn label="DOUBLE" onClick={doubleDown} disabled={currentHand.length!==2||chips<currentBetForHand} color="#2980b9"/>
+              </div>
+              {canSplit&&(
+                <div style={{position:"relative",display:"inline-block"}} title={!canAffordSplit?"Insufficient Funds":""}>
+                  <Btn label="SPLIT" onClick={canAffordSplit?doSplit:()=>{}} disabled={!canAffordSplit} color="#9b59b6"/>
+                </div>
+              )}
             </div>}
 
             {phase==="result"&&<Btn label="NEXT HAND" onClick={newRound} disabled={false} color="#c9a84c"/>}
@@ -1208,7 +1269,7 @@ export default function App() {
         </div>}
 
         {chips===0&&bet===0&&phase==="betting"&&view==="game"&&<div style={{textAlign:"center",marginTop:10}}>
-          <Btn label="RELOAD $1,000" onClick={()=>updateSave(prev=>({...prev,chips:1000}))} disabled={false} color="#e74c3c"/>
+          <Btn label="RELOAD $10,000" onClick={()=>updateSave(prev=>({...prev,chips:10000}))} disabled={false} color="#e74c3c"/>
         </div>}
       </div>
 
